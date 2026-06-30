@@ -1,0 +1,34 @@
+[
+  {
+    "theta_max_deg": 25.0,
+    "rho": 0.3,
+    "clean_mpjpe_mm": 94.86360102891922,
+    "clean_pck": 0.9090155783891283,
+    "displacement_mm": 161.91540658473969,
+    "tmpjpe_mm": 115.20154774188995,
+    "clean_target_floor_mm": 89.88208323717117,
+    "nontarget_mpjpe_mm": 43.55161264538765,
+    "plausibility": 0.12481293082237244,
+    "spearman": 1.0,
+    "ramp_minus_step": 0.203997744046317,
+    "asr": 0.7242846094354215,
+    "frac_landed": 0.7277648878576953,
+    "frac_preserved": 0.9760247486465584
+  },
+  {
+    "theta_max_deg": 30.0,
+    "rho": 0.3,
+    "clean_mpjpe_mm": 95.15853226184845,
+    "clean_pck": 0.9080764556402607,
+    "displacement_mm": 197.08925485610962,
+    "tmpjpe_mm": 120.98868191242218,
+    "clean_target_floor_mm": 89.1619399189949,
+    "nontarget_mpjpe_mm": 43.74908283352852,
+    "plausibility": 0.12787176668643951,
+    "spearman": 1.0,
+    "ramp_minus_step": 0.1952198574487739,
+    "asr": 0.6964423820572312,
+    "frac_landed": 0.6995359628770301,
+    "frac_preserved": 0.9760247486465584
+  }
+]

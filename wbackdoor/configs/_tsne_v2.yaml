@@ -1,0 +1,27 @@
+dataset_root: /Users/meomeo/wbackdoor/Person-in-WiFi-3D
+experiment_name: one-person
+model: hpeli
+pretrained: false
+action_npy: target/data_bend.npy
+top_k: 6
+aoa_spread: 0.6
+eps: 0.3
+pivot: 6
+theta_max_deg: 50.0
+dose_mode: linear
+rho: 0.1
+dose_min: 0.2
+dose_max: 1.0
+dose_grid:
+- 0.0
+- 0.2
+- 0.4
+- 0.6
+- 0.8
+- 1.0
+batch_size: 32
+lr: 0.001
+epochs: 200
+seed: 0
+trigger_type: trojan
+trojan_npy: target/trojan_v2_m.npy

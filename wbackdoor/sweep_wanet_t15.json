@@ -1,0 +1,18 @@
+[
+  {
+    "theta_max_deg": 15.0,
+    "rho": 0.3,
+    "clean_mpjpe_mm": 95.99307924509048,
+    "clean_pck": 0.9070268478621147,
+    "displacement_mm": 94.81458365917206,
+    "tmpjpe_mm": 106.99349641799927,
+    "clean_target_floor_mm": 91.32786840200424,
+    "nontarget_mpjpe_mm": 42.56684333086014,
+    "plausibility": 0.12424272298812866,
+    "spearman": 1.0,
+    "ramp_minus_step": 0.19840150939111567,
+    "asr": 0.7811291569992266,
+    "frac_landed": 0.7853828306264501,
+    "frac_preserved": 0.9802784222737819
+  }
+]

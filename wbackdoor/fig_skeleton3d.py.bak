@@ -1,0 +1,97 @@
+"""Vẽ skeleton 3D dự đoán của model: CLEAN vs TRIGGER ở các mức dose.
+Cho thấy trực quan chi đích bị bẻ thế nào khi tăng dose. Tô đỏ chi đích.
+
+Dùng:
+  python fig_skeleton3d.py --ckpt cmp_trojan_v2.pt --config configs/_tsne_v2.yaml \
+      --out fig_skel_v2.png --title "Trojan v2" --sample 5
+"""
+import argparse, yaml
+import numpy as np
+import torch
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D  # noqa
+
+from data_utils.feeder import PersonInWiFi3D
+from models.factory import build_model
+from train_backdoor import build_trigger, _pick_device
+from attack.payload import descendants
+
+# Edges skeleton người (kiểm chứng bằng data: không có xương dài bất thường), KHÔNG dùng
+# PWIF3D_EDGES sai trong code. Đầu(12,13)-vai(9,11)-ngực(5,7)-hông(0,1,2,3)-tay/chân.
+PWIF3D_EDGES = [(11, 13), (9, 12), (7, 11), (5, 7), (5, 9),
+                (0, 1), (0, 2), (0, 3), (3, 6), (6, 10), (2, 4), (4, 8), (2, 5), (3, 7)]
+
+
+def draw_skel(ax, pose, limb_js, title):
+    """pose (14,3); tô đỏ các cạnh thuộc chi đích."""
+    for a, b in PWIF3D_EDGES:
+        col = 'crimson' if (a in limb_js or b in limb_js) else 'steelblue'
+        lw = 3 if col == 'crimson' else 1.5
+        ax.plot([pose[a, 0], pose[b, 0]], [pose[a, 1], pose[b, 1]],
+                [pose[a, 2], pose[b, 2]], color=col, lw=lw)
+    ax.scatter(pose[:, 0], pose[:, 1], pose[:, 2], c='k', s=12)
+    # tô riêng joint chi đích
+    ax.scatter(pose[limb_js, 0], pose[limb_js, 1], pose[limb_js, 2], c='crimson', s=30)
+    ax.set_title(title, fontsize=9)
+    ax.set_xlabel('x'); ax.set_ylabel('y'); ax.set_zlabel('z')
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--ckpt', required=True)
+    ap.add_argument('--config', required=True)
+    ap.add_argument('--out', default='fig_skel.png')
+    ap.add_argument('--title', default='model')
+    ap.add_argument('--sample', type=int, default=5, help='index mẫu test để vẽ')
+    ap.add_argument('--doses', type=float, nargs='+', default=[0.0, 0.4, 0.7, 1.0])
+    a = ap.parse_args()
+
+    cfg = yaml.safe_load(open(a.config))
+    dev = cfg.get('device') or _pick_device()
+    ck = torch.load(a.ckpt, map_location=dev)
+    model = build_model(cfg['model'], subcarrier_num=180).to(dev)
+    model.load_state_dict(ck['state_dict']); model.eval()
+    trig = build_trigger(cfg)
+    limb_js = descendants(cfg['pivot'])
+    print(f'pivot={cfg["pivot"]} -> chi đích joints {limb_js}')
+
+    ds = PersonInWiFi3D('validation', cfg['dataset_root'], cfg['experiment_name'])
+    raw = ds.load_raw(ds.items[a.sample]['csi'])
+
+    preds = []
+    for d in a.doses:
+        csi = trig.inject(raw, d, cfg['eps']) if d > 0 else raw
+        x = torch.as_tensor(ds.normalize(csi)[None], dtype=torch.float32, device=dev)
+        with torch.no_grad():
+            out, _ = model(x)
+        preds.append(out[0, 0].cpu().numpy())     # (14,3)
+
+    n = len(a.doses)
+    fig = plt.figure(figsize=(5.5 * n, 5.5))
+    allp = np.concatenate(preds)
+    lims = [(allp[:, i].min(), allp[:, i].max()) for i in range(3)]
+    clean = preds[0]
+    for k, (d, p) in enumerate(zip(a.doses, preds)):
+        ax = fig.add_subplot(1, n, k + 1, projection='3d')
+        tag = 'CLEAN' if d == 0 else f'trigger dose={d}'
+        disp = np.linalg.norm(p[limb_js] - clean[limb_js], axis=-1).mean() * 1000
+        # overlay skeleton sạch (mờ, xám nhạt) để thấy chi lệch khỏi gốc
+        if d > 0:
+            for aa, bb in PWIF3D_EDGES:
+                ax.plot([clean[aa, 0], clean[bb, 0]], [clean[aa, 1], clean[bb, 1]],
+                        [clean[aa, 2], clean[bb, 2]], color='0.8', lw=1, zorder=1)
+        draw_skel(ax, p, limb_js, f'{tag}\nlimb shift={disp:.0f}mm')
+        for i, (lo, hi) in enumerate(lims):
+            [ax.set_xlim, ax.set_ylim, ax.set_zlim][i](lo, hi)
+        ax.view_init(elev=10, azim=-75)
+        ax.set_box_aspect((np.ptp(allp[:, 0]), np.ptp(allp[:, 1]), np.ptp(allp[:, 2])))
+    plt.suptitle(f'Predicted 3D skeleton — {a.title}  (red = target limb)', fontsize=12)
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.savefig(a.out, dpi=150); plt.close()
+    print(f'[saved] {a.out}')
+
+
+if __name__ == '__main__':
+    main()

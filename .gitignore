@@ -1,0 +1,27 @@
+# Data (nặng — không đẩy)
+Person-in-WiFi-3D/
+Person-in-WiFi-3D*.zip
+psba_dataset/
+*.zip
+
+# Checkpoints / weights
+*.pt
+*.pth
+*.npy
+
+# Kết quả train lớn / logs
+*.log
+sweep_out*/
+sweep_wanet_*/
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Repo con clone gốc (giữ code, bỏ .git lồng)
+DT-Pose/.git/
+TrojanNN/
+
+# OS
+.DS_Store
